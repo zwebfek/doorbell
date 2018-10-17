@@ -1,44 +1,31 @@
-import alsaaudio, time, audioop, json, sys, requests
+#!/usr/bin/env python
 
-if len(sys.argv) > 1 and sys.argv[1].isdigit():
-    min_val = int(sys.argv[1]) or 3000
-else:
-    min_val = 3000
+import os
+import json
+import optparse
 
-print('min_val: ' + str(min_val))
+def get_config(path="./config.json"):
+    config = {}
+    if os.path.exists(path):
+        with open(path) as f:
+            config = json.loads(f.read())
+    config.setdefault('telegram_api_key', None)
+    config.setdefault('chat_id', None)
+    config.setdefault('trigger_val', 20000)
+    config.setdefault('message', "Ding dong!")
+    config.setdefault('device', "hw:0,0")
+    return config
 
-with open('./config.json') as f:
-    config = json.loads(f.read())
+def get_arguments(config={}):
+    parser = optparse.OptionParser()
+    parser.set_defaults(**config)
+    parser.add_option("-t", "--trigger-val", type="int", dest="trigger_val")
+    parser.add_option("-d", "--device", type="string", dest="device")
+    parser.add_option("-m", "--message", type="string", dest="message")
+    parser.add_option("-k", "--telegram-api-key", type="string", dest="telegram_api_key")
+    parser.add_option("-c", "--chat-id", type="string", dest="chat_id")
+    return parser.parse_args()
 
-def send_message(api_key=config['telegram_bot_api_key'], chat_id=config['chat_id'], msg=config['message'], parse_mode='Markdown'):
-    url = 'https://api.telegram.org/bot{}/sendMessage?chat_id={}&parse_mode={}&text={}'.format(api_key, chat_id, parse_mode, msg)
-    r = requests.get(url)
-    return r.ok
-
-inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NONBLOCK, device='hw:0,0')
-
-# Mono, 8000 Hz, 16 bit little endian samples
-inp.setchannels(1)
-inp.setrate(8000)
-inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-
-# Each frame is 2 bytes long.
-# The reads below will return either 320 bytes or 0 bytes of data.
-inp.setperiodsize(160)
-
-print('Capturing audio...')
-
-while True:
-    l, data = inp.read()
-    if l:
-        # Return the maximum of the absolute value of all samples in a fragment.
-        m = audioop.max(data, 2)
-        if m >= min_val:
-            print(m)
-            print('min_val reached.')
-            print('Sending message...')
-            send_message()
-            print('Message sent.')
-            print('Quitting...')
-            break
-    time.sleep(.001)
+config = get_config()
+(options, arguments) = get_arguments(config)
+print(options)
