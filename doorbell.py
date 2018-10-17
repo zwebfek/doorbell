@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import alsaaudio, requests, os, time, audioop, json, sys, optparse
 
