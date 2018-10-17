@@ -1,5 +1,7 @@
 {
-  "telegram_bot_api_key": "",
+  "telegram_api_key": "",
   "chat_id": "",
-  "message": "*Ding dong!* Your doorbell just rang."
+  "trigger_val": 20000,
+  "message": "*Ding dong!* Your doorbell just rang.",
+  "device": "hw:0,0"
 }
