@@ -22,7 +22,11 @@ def get_arguments(config={}):
     parser.add_option("-m", "--message", type="string", dest="message", help="set message that will be sent")
     parser.add_option("-k", "--telegram-api-key", type="string", dest="telegram_api_key", help="set telegram api key")
     parser.add_option("-c", "--chat-id", type="string", dest="chat_id", help="set id of the telegram chat that the message will be sent to")
-    return parser.parse_args()
+    (options, arguments) = parser.parse_args()
+    if not options.telegram_api_key:
+        parser.error("Telegram API key not provided.")
+    if not options.chat_id:
+        parser.error("Telegram chat ID not provided.")
 
 def send_message(telegram_api_key, chat_id, message, parse_mode="Markdown"):
     url = "https://api.telegram.org/bot{}/sendMessage?chat_id={}&parse_mode={}&text={}"
