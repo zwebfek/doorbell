@@ -7,11 +7,11 @@ def get_config(path="./config.json"):
     if os.path.exists(path):
         with open(path) as f:
             config = json.loads(f.read())
-    config.setdefault('telegram_api_key', None)
-    config.setdefault('chat_id', None)
-    config.setdefault('trigger_val', 20000)
-    config.setdefault('message', "Ding dong!")
-    config.setdefault('device', "hw:0,0")
+    config.setdefault("telegram_api_key", None)
+    config.setdefault("chat_id", None)
+    config.setdefault("trigger_val", 20000)
+    config.setdefault("message", "Ding dong!")
+    config.setdefault("device", "hw:0,0")
     return config
 
 def get_arguments(config={}):
@@ -27,6 +27,7 @@ def get_arguments(config={}):
         parser.error("Telegram API key not provided.")
     if not options.chat_id:
         parser.error("Telegram chat ID not provided.")
+    return (options, arguments)
 
 def send_message(telegram_api_key, chat_id, message, parse_mode="Markdown"):
     url = "https://api.telegram.org/bot{}/sendMessage?chat_id={}&parse_mode={}&text={}"
