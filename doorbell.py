@@ -61,5 +61,5 @@ if listen_for_trigger(trigger_val=options.trigger_val, device=options.device):
     if send_message(options.telegram_api_key, options.chat_id, options.message):
         print("[+] Message sent successfully.")
     else:
-        print("[-] Error while sending message.")
+        print("[-] Error while sending message.", file=sys.stderr)
         exit(1)
