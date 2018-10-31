@@ -3,31 +3,16 @@
 import alsaaudio, requests, os, time, audioop, json, sys, optparse
 
 def get_config(path="./config.json"):
-    config = {}
     if os.path.exists(path):
-        with open(path) as f:
-            config = json.loads(f.read())
-    config.setdefault("telegram_api_key", None)
-    config.setdefault("chat_id", None)
-    config.setdefault("trigger_val", 20000)
-    config.setdefault("message", "Ding dong!")
-    config.setdefault("device", "hw:0,0")
-    return config
+        config = json.loads(open(path).read())
+        return config
 
-def get_arguments(config={}):
+def get_parser():
     parser = optparse.OptionParser()
-    parser.set_defaults(**config)
     parser.add_option("-t", "--trigger-val", type="int", dest="trigger_val", help="set volume trigger level")
     parser.add_option("-d", "--device", type="string", dest="device", help="set audio device that will be listened on")
     parser.add_option("-m", "--message", type="string", dest="message", help="set message that will be sent")
-    parser.add_option("-k", "--telegram-api-key", type="string", dest="telegram_api_key", help="set telegram api key")
-    parser.add_option("-c", "--chat-id", type="string", dest="chat_id", help="set id of the telegram chat that the message will be sent to")
-    (options, arguments) = parser.parse_args()
-    if not options.telegram_api_key:
-        parser.error("Telegram API key not provided.")
-    if not options.chat_id:
-        parser.error("Telegram chat ID not provided.")
-    return (options, arguments)
+    return parser
 
 def send_message(telegram_api_key, chat_id, message, parse_mode="Markdown"):
     url = "https://api.telegram.org/bot{}/sendMessage?chat_id={}&parse_mode={}&text={}"
@@ -51,15 +36,39 @@ def listen_for_trigger(trigger_val=20000, device="hw:0,0"):
                 return True
         time.sleep(.001)
 
-config = get_config()
-(options, arguments) = get_arguments(config)
-print("Trigger value = " + str(options.trigger_val))
+def main(args, config={}):
+    config = config or get_config()
+    config.setdefault("telegram_api_key", None)
+    config.setdefault("chat_id", None)
+    config.setdefault("trigger_val", 20000)
+    config.setdefault("message", "Ding dong!")
+    config.setdefault("device", "hw:0,0")
 
-if listen_for_trigger(trigger_val=options.trigger_val, device=options.device):
-    print("[+] Trigger value reached.")
-    print("[+] Sending message...")
-    if send_message(options.telegram_api_key, options.chat_id, options.message):
-        print("[+] Message sent successfully.")
-    else:
-        print("[-] Error while sending message.", file=sys.stderr)
-        exit(1)
+    parser = get_parser()
+    parser.set_defaults(**config)
+    options = parser.parse_args(args)[0]
+
+    if not config["telegram_api_key"]:
+        print("[-] Telegram API key not provided in config.", file=sys.stderr)
+        sys.exit(1)
+    if not config["chat_id"]:
+        print("[-] Telegram chat ID not provided in config.", file=sys.stderr)
+        sys.exit(1)
+
+    print("Trigger value = " + str(options.trigger_val))
+
+    if listen_for_trigger(trigger_val=options.trigger_val, device=options.device):
+        print("[+] Trigger value reached.")
+        print("[+] Sending message...")
+        try:
+            if send_message(options.telegram_api_key, options.chat_id, options.message):
+                print("[+] Message sent successfully.")
+            else:
+                print("[-] Server returned non-ok status.", file=sys.stderr)
+                sys.exit(1)
+        except:
+            print("[-] Error while sending message.", file=sys.stderr)
+            sys.exit(1)
+
+if __name__ == "__main__":
+    main(sys.argv)
